@@ -1,12 +1,22 @@
 import const as CONST
 import math
 
-# class - function
+# MemberDistance class
+# .  [PARAM]
+# .. member -> number
+# .. distance -> number
 class MemberDistance:
   def __init__(self, member, distance):
     self.member = member
     self.distance = distance
 
+# calculate function
+# .  [PARAM]
+# .. data -> list tuple, ex: [(1, 2), (2, 0), <META>]
+# .. centers -> list tuple, ex: [(1, 2), (2, 0)]
+# .. K -> number
+# .
+# return -> tuple (<NEW_CENTER>, <LIST CLUSTER>, <SSE>)
 def calculate(data, centers, K):
   clusterSnapshot = []
   sse = 0
@@ -44,7 +54,7 @@ def calculate(data, centers, K):
     n[distances[0].member] += 1
 
   else:
-    print('clusterSnapshot: ' + str(clusterSnapshot))
+    # print('clusterSnapshot: ' + str(clusterSnapshot))
     print('sse: ' + str(sse))
     # print('sumX: ' + str(sumX))
     # print('sumY: ' + str(sumY))
@@ -52,13 +62,23 @@ def calculate(data, centers, K):
 
   newCenter = []
   for j in range(K):
-    xNew = sumX[j] / n[j]
-    yNew = sumY[j] / n[j]
+    xNew = 0
+    yNew = 0
+    if n[j] > 0:
+      xNew = sumX[j] / n[j]
+      yNew = sumY[j] / n[j]
+    
     newCenter.append((xNew, yNew))
 
   print('newCenter: ' + str(newCenter))
   return (newCenter, clusterSnapshot, sse)
 
+# main clustering function
+# .  [PARAM]
+# .. data -> list tuple, ex: [(1, 2), (2, 0), <META>]
+# .. k -> numbers
+# .
+# return -> tuple [LIST CLUSTER]
 def clustering(data, k):
   print('')
 
@@ -84,6 +104,8 @@ def clustering(data, k):
       print('\nfinally equal at i-' + str(i))
       isNotEqual = False
       cluster = res[CONST.RES_IDX_SNAPSHOT]
+      print('cluster: ' + str(cluster))
+    
     print('')
 
   return cluster

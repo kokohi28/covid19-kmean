@@ -16,7 +16,7 @@ currMenu = MENU_ROOT
 def welcomeMessage():
   print('##############################################################################')
   print('####                                                                      ####')
-  print('####   COVID-19 KMEAN CLUSTERING IMPLEMENTATION                           ####')
+  print('####   COVID-19 K-MEAN CLUSTERING IMPLEMENTATION                          ####')
   print('####                                                                      ####')
   print('####   BY : - M. Khafidhun Alim Muslim (17051204063)                      ####')
   print('####        - Akhmad Hilmy Zakaria (17051204028)                          ####')

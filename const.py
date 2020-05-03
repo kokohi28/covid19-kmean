@@ -15,3 +15,4 @@ RES_IDX_SSE = 2
 # AXIS
 X_IDX = 0
 Y_IDX = 1
+META_IDX = 2
