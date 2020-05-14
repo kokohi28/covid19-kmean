@@ -14,19 +14,19 @@ prevMenu = MENU_ROOT
 currMenu = MENU_ROOT
 
 def welcomeMessage():
-  print('##############################################################################')
-  print('####                                                                      ####')
-  print('####   COVID-19 K-MEAN CLUSTERING IMPLEMENTATION                          ####')
-  print('####                                                                      ####')
-  print('####   BY : - M. Khafidhun Alim Muslim (17051204063)                      ####')
-  print('####        - Akhmad Hilmy Zakaria (17051204028)                          ####')
-  print('####        - Koko Himawan Permadi (19051204111)                          ####')
-  print('####                                                                      ####')
-  print('##############################################################################')
+  print('##############################################################')
+  print('##                                                          ##')
+  print('##   COVID-19 K-MEAN CLUSTERING IMPLEMENTATION              ##')
+  print('##                                                          ##')
+  print('##   BY : - M. Khafidhun Alim Muslim (17051204063)          ##')
+  print('##        - Akhmad Hilmy Zakaria (17051204028)              ##')
+  print('##        - Koko Himawan Permadi (19051204111)              ##')
+  print('##                                                          ##')
+  print('##############################################################')
   return
 
 def menuSelectK(cluster):
-  print('\nSpecify K for {} cluster ({}-{}):'.format(cluster, CONST.MIN_K, CONST.MAX_K))
+  print(f'\nSpecify K for {cluster} cluster ({CONST.MIN_K}-{CONST.MAX_K}):')
   print('')
   print('Press [B] for Back')
   return
@@ -35,7 +35,7 @@ def menuSelectContinent(continents):
   print('')
   print('Select continent :')
   for i in range(len(continents)):
-    print('{}. {}'.format((i + 1), continents[i]))
+    print(f'{(i + 1)}. {continents[i]}')
   print('')
   print('Press [B] for Back')
   return
@@ -44,7 +44,7 @@ def menuSelectCountries(countries):
   print('')
   print('Select country :')
   for i in range(len(countries)):
-    print('{}. {}'.format((i + 1), countries[i]))
+    print(f'{(i + 1)}. {countries[i]}')
   print('')
   print('Press [B] for Back')
   return
@@ -73,13 +73,13 @@ def handleInputK(inputVal):
       if num == 0 or \
          num == 1 or \
          num > CONST.MAX_K:
-        print('\n{} is INVALID, Specify {} until {}... (Press ENTER for Next)'.format(num, CONST.MIN_K, CONST.MAX_K))
+        print(f'\n{num} is INVALID, Specify {CONST.MIN_K} until {CONST.MAX_K}... (Press ENTER to continue)')
         input('')
         return 0
       else :
         return num
     else:
-      print('\nINVALID Input, Specify {} until {}... (Press ENTER for Next)'.format(CONST.MIN_K, CONST.MAX_K))
+      print(f'\nINVALID Input, Specify {CONST.MIN_K} until {CONST.MAX_K}... (Press ENTER to continue)')
       input('')
       return 0
 
@@ -97,13 +97,13 @@ def handleInputContinent(inputVal, continents):
       num = int(inputVal)
       if num == 0 or \
          num > size:
-        print('\nSelection INVALID... (Press ENTER for Next)')
+        print('\nSelection INVALID... (Press ENTER to continue)')
         input('')
         return ''
       else:
         return continents[num - 1]
     else:
-      print('\nSelection INVALID... (Press ENTER for Next)')
+      print('\nSelection INVALID... (Press ENTER to continue)')
       input('')
       return ''
 
@@ -121,13 +121,13 @@ def handleInputCountry(inputVal, countries):
       num = int(inputVal)
       if num == 0 or \
          num > size:
-        print('\nSelection INVALID... (Press ENTER for Next)')
+        print('\nSelection INVALID... (Press ENTER to continue)')
         input('')
         return ''
       else:
         return countries[num - 1]
     else:
-      print('\nSelection INVALID... (Press ENTER for Next)')
+      print('\nSelection INVALID... (Press ENTER to continue)')
       input('')
       return ''
 

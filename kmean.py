@@ -54,8 +54,9 @@ def calculate(data, centers, K):
     n[distances[0].member] += 1
 
   else:
+    pass
     # print('clusterSnapshot: ' + str(clusterSnapshot))
-    print('sse: ' + str(sse))
+    # print(f'sse: {sse:,.2f}')
     # print('sumX: ' + str(sumX))
     # print('sumY: ' + str(sumY))
     # print('n: ' + str(n))
@@ -70,7 +71,7 @@ def calculate(data, centers, K):
     
     newCenter.append((xNew, yNew))
 
-  print('newCenter: ' + str(newCenter))
+  # print('newCenter: ' + str(newCenter))
   return (newCenter, clusterSnapshot, sse)
 
 # main clustering function
@@ -80,8 +81,6 @@ def calculate(data, centers, K):
 # .
 # return -> tuple [LIST CLUSTER]
 def clustering(data, k):
-  print('')
-
   # Init center with data itself
   centerInit = []
   for i in range(k):
@@ -95,17 +94,16 @@ def clustering(data, k):
   isNotEqual = True
   while isNotEqual:
     i += 1
-    print('loop at i-' + str(i) + ':')
-
+    
     res = calculate(data, center, k)
+    print(f'loop at i-{i}, sse:{res[CONST.RES_IDX_SSE]:,.2f}')
+
     if center != res[CONST.RES_IDX_CENTER]:
       center = res[CONST.RES_IDX_CENTER]
     else:
-      print('\nfinally equal at i-' + str(i))
+      print(f'\nFinally equal at i-{i}')
       isNotEqual = False
       cluster = res[CONST.RES_IDX_SNAPSHOT]
-      print('cluster: ' + str(cluster))
-    
-    print('')
+      # print('cluster: ' + str(cluster))
 
   return cluster

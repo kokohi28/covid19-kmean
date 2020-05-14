@@ -1,5 +1,12 @@
+# dataframe, numpy
 import pandas as pd
+import numpy as np
+
+# graph
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
+
+# local module
 import const as CONST
 import menu
 import kmean
@@ -32,70 +39,88 @@ class CaseVelocity:
 # .. data -> pandas DataFrame
 # .. K -> number
 # .
-def doClusteringForWorld(data, K):
-  print('\n>>> Clustering for World, with K: {}'.format(K))
+def doClusteringForWorld(df, K):
+  print(f'\n>>> Clustering for World, with K: {K}')
 
   # Sum cases and death based country
   COUNTRY_LABEL = 'countriesAndTerritories'
-  seaCases = {}
-  for index, row in data.iterrows():
+  worldCases = {}
+  for index, row in df.iterrows():
     case = row[X_LABEL]
     death = row[Y_LABEL]
     country = row[COUNTRY_LABEL]
 
-    if country not in seaCases:
+    if country not in worldCases:
       countryCase = CaseVelocity(country)
       countryCase.population = row['popData2018']
       countryCase.sumCase += case
       countryCase.sumDeath += death
       countryCase.nData += 1
 
-      seaCases[country] = countryCase
+      worldCases[country] = countryCase
     else:
-      countryCase = seaCases[country]
+      countryCase = worldCases[country]
       countryCase.sumCase += case
       countryCase.sumDeath += death
       countryCase.nData += 1
 
-      seaCases[country] = countryCase
+      worldCases[country] = countryCase
 
   # Create list of tuple
-  print('##############################################################################')
-  print('Countries data:')
+  print(f'\nCountries data [{len(worldCases)}]:')
   dataList = []
-  for c in seaCases:
-    case = seaCases[c]
+  i = 1
+  for c in worldCases:
+    case = worldCases[c]
 
     # Velocity based on n Cases/Data
     caseVelocity = case.sumCase / case.nData
     deathVelocity = case.sumDeath / case.nData
 
-    print('\n{} -> population: {}, N-Data (N-Day): {}'.format(case.id, case.population, case.nData))
-    print('SUM-Case:{}, Velocity (Case / N-Data):{}'.format(case.sumCase, caseVelocity))
-    print('SUM-Death:{}, Velocity (Death / N-Data):{}'.format(case.sumDeath, deathVelocity))
+    print('--------------------------------------------------------------')
+    print(f'{i}. {case.id} -> population: {case.population:,.0f}   N(Day): {case.nData}')
+    print(f'• sum-case: {case.sumCase:,.0f}   velocity (case / N): {caseVelocity:,.2f}')
+    print(f'• sum-death: {case.sumDeath:,.0f}   velocity (death / N): {deathVelocity:,.2f}')
 
     entry = (caseVelocity, deathVelocity, case.id)
     dataList.append(entry)
 
+    i += 1
+
   # Send list of tuple, and process clustering
-  print('##############################################################################')
-  print('Cluster result:')
+  print('\nClustering…\n')
   cluster = kmean.clustering(dataList, K)
 
+  # Create clusterSize and print cluster result 
+  clusterSize = {}
+  print('Cluster result:')
+  for i in range(len(dataList)):
+    print(f'{i + 1}. {dataList[i][CONST.META_IDX]} - {cluster[i]}')
+    
+    clusterKey = f'cluster-{cluster[i]}'
+    if clusterKey in clusterSize:
+      currVal = clusterSize[clusterKey]
+      clusterSize[clusterKey] = currVal + 1
+    else:
+      clusterSize[clusterKey] = 1
+  
+  print('\nSize of cluster member :')
+  for key in clusterSize:
+    print(f'* {key} : {clusterSize[key]}')
+
   # Plot scatter graph
-  print('##############################################################################')
-  print('Graph:')
-  plotScatterGraph(dataList, cluster, 'World')
+  print('\nProcessing Graph…')
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, 'World', K)
 
   return
 
 # Clustering for Southeast Asia (SEA) Data
 # .  [PARAM]
-# .. data -> pandas DataFrame
+# .. df -> pandas DataFrame
 # .. K -> number
 # .
-def doClusteringForSEA(data, K):
-  print('\n>>> Clustering for SEA, with K: {}'.format(K))
+def doClusteringForSEA(df, K):
+  print(f'\n>>> Clustering for SEA, with K: {K}')
 
   # Declare SEA countries
   seaCountries = []
@@ -116,16 +141,16 @@ def doClusteringForSEA(data, K):
   i = 0
   for country in seaCountries:
     if i == 0:
-      queryStr += 'countriesAndTerritories == "{}"'.format(country)
+      queryStr += f'countriesAndTerritories == "{country}"'
     else:
-      queryStr += ' or countriesAndTerritories == "{}"'.format(country)
+      queryStr += f' or countriesAndTerritories == "{country}"'
     i += 1
-  data.query(queryStr, inplace = True)
+  df.query(queryStr, inplace = True)
 
   # Sum cases and death based country
   COUNTRY_LABEL = 'countriesAndTerritories'
   seaCases = {}
-  for index, row in data.iterrows():
+  for index, row in df.iterrows():
     case = row[X_LABEL]
     death = row[Y_LABEL]
     country = row[COUNTRY_LABEL]
@@ -147,9 +172,9 @@ def doClusteringForSEA(data, K):
       seaCases[country] = countryCase
 
   # Create list of tuple
-  print('##############################################################################')
-  print('Countries data:')
+  print(f'\nCountries data [{len(seaCases)}]:')
   dataList = []
+  i = 1
   for c in seaCases:
     case = seaCases[c]
 
@@ -157,22 +182,40 @@ def doClusteringForSEA(data, K):
     caseVelocity = case.sumCase / case.nData
     deathVelocity = case.sumDeath / case.nData
 
-    print('\n{} -> population: {}, N-Data (N-Day): {}'.format(case.id, case.population, case.nData))
-    print('SUM-Case:{}, Velocity (Case / N-Data):{}'.format(case.sumCase, caseVelocity))
-    print('SUM-Death:{}, Velocity (Death / N-Data):{}'.format(case.sumDeath, deathVelocity))
+    print('--------------------------------------------------------------')
+    print(f'{i}. {case.id} -> population: {case.population:,.0f}   N(Day): {case.nData}')
+    print(f'• sum-case: {case.sumCase:,.0f}   velocity (case / N): {caseVelocity:,.2f}')
+    print(f'• sum-death: {case.sumDeath:,.0f}   velocity (death / N): {deathVelocity:,.2f}')
 
     entry = (caseVelocity, deathVelocity, case.id)
     dataList.append(entry)
 
+    i += 1
+
   # Send list of tuple, and process clustering
-  print('##############################################################################')
-  print('Cluster result:')
+  print('\nClustering…\n')
   cluster = kmean.clustering(dataList, K)
 
+  # Create clusterSize and print cluster result 
+  clusterSize = {}
+  print('Cluster result:')
+  for i in range(len(dataList)):
+    print(f'{i + 1}. {dataList[i][CONST.META_IDX]} - {cluster[i]}')
+    
+    clusterKey = f'cluster-{cluster[i]}'
+    if clusterKey in clusterSize:
+      currVal = clusterSize[clusterKey]
+      clusterSize[clusterKey] = currVal + 1
+    else:
+      clusterSize[clusterKey] = 1
+  
+  print('\nSize of cluster member :')
+  for key in clusterSize:
+    print(f'* {key} : {clusterSize[key]}')
+
   # Plot scatter graph
-  print('##############################################################################')
-  print('Graph:')
-  plotScatterGraph(dataList, cluster, 'SEA')
+  print('\nProcessing Graph…')
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, 'SEA', K)
 
   return
 
@@ -181,64 +224,82 @@ def doClusteringForSEA(data, K):
 # .. data -> pandas DataFrame
 # .. K -> number
 # .
-def doClusteringForContinent(data, continent, K):
-  print('\n>>> Clustering for {} with K: {}'.format(continent, K))
+def doClusteringForContinent(df, continent, K):
+  print(f'\n>>> Clustering for {continent} with K: {K}')
 
   # Query - strip data
-  queryStr = 'continentExp == "{}"'.format(continent)
-  data.query(queryStr, inplace = True)
+  queryStr = f'continentExp == "{continent}"'
+  df.query(queryStr, inplace = True)
 
   # Sum cases and death based country
   COUNTRY_LABEL = 'countriesAndTerritories'
-  seaCases = {}
-  for index, row in data.iterrows():
+  continentCases = {}
+  for index, row in df.iterrows():
     case = row[X_LABEL]
     death = row[Y_LABEL]
     country = row[COUNTRY_LABEL]
 
-    if country not in seaCases:
+    if country not in continentCases:
       countryCase = CaseVelocity(country)
       countryCase.population = row['popData2018']
       countryCase.sumCase += case
       countryCase.sumDeath += death
       countryCase.nData += 1
 
-      seaCases[country] = countryCase
+      continentCases[country] = countryCase
     else:
-      countryCase = seaCases[country]
+      countryCase = continentCases[country]
       countryCase.sumCase += case
       countryCase.sumDeath += death
       countryCase.nData += 1
 
-      seaCases[country] = countryCase
+      continentCases[country] = countryCase
 
   # Create list of tuple
-  print('##############################################################################')
-  print('Countries data:')
+  print(f'\nCountries data [{len(continentCases)}]:')
   dataList = []
-  for c in seaCases:
-    case = seaCases[c]
+  i = 1
+  for c in continentCases:
+    case = continentCases[c]
 
     # Velocity based on n Cases/Data
     caseVelocity = case.sumCase / case.nData
     deathVelocity = case.sumDeath / case.nData
 
-    print('\n{} -> population: {}, N-Data (N-Day): {}'.format(case.id, case.population, case.nData))
-    print('SUM-Case:{}, Velocity (Case / N-Data):{}'.format(case.sumCase, caseVelocity))
-    print('SUM-Death:{}, Velocity (Death / N-Data):{}'.format(case.sumDeath, deathVelocity))
+    print('--------------------------------------------------------------')
+    print(f'{i}. {case.id} -> population: {case.population:,.0f}   N(Day): {case.nData}')
+    print(f'• sum-case: {case.sumCase:,.0f}   velocity (case / N): {caseVelocity:,.2f}')
+    print(f'• sum-death: {case.sumDeath:,.0f}   velocity (death / N): {deathVelocity:,.2f}')
 
     entry = (caseVelocity, deathVelocity, case.id)
     dataList.append(entry)
 
+    i += 1
+
   # Send list of tuple, and process clustering
-  print('##############################################################################')
-  print('Cluster result:')
+  print('\nClustering…\n')
   cluster = kmean.clustering(dataList, K)
 
+  # Create clusterSize and print cluster result 
+  clusterSize = {}
+  print('Cluster result:')
+  for i in range(len(dataList)):
+    print(f'{i + 1}. {dataList[i][CONST.META_IDX]} - {cluster[i]}')
+    
+    clusterKey = f'cluster-{cluster[i]}'
+    if clusterKey in clusterSize:
+      currVal = clusterSize[clusterKey]
+      clusterSize[clusterKey] = currVal + 1
+    else:
+      clusterSize[clusterKey] = 1
+  
+  print('\nSize of cluster member :')
+  for key in clusterSize:
+    print(f'* {key} : {clusterSize[key]}')
+
   # Plot scatter graph
-  print('##############################################################################')
-  print('Graph:')
-  plotScatterGraph(dataList, cluster, continent)
+  print('\nProcessing Graph…')
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, continent, K)
 
   return
 
@@ -247,39 +308,54 @@ def doClusteringForContinent(data, continent, K):
 # .. data -> pandas DataFrame
 # .. K -> number
 # .
-def doClusteringForCountry(data, country, K):
-  print('\n>>> Clustering for {} with K: {}'.format(country, K))
+def doClusteringForCountry(df, country, K):
+  print(f'\n>>> Clustering for {country} with K: {K}')
   
   # Query - strip data
-  queryStr = 'countriesAndTerritories == "{}"'.format(country)
-  data.query(queryStr, inplace = True)
+  queryStr = f'countriesAndTerritories == "{country}"'
+  df.query(queryStr, inplace = True)
 
   # Create list of tuple
   META_LABEL = 'dateRep'
   dataList = []
-  for index, row in data.iterrows():
+  for index, row in df.iterrows():
     entry = (row[X_LABEL], row[Y_LABEL], row[META_LABEL])
     dataList.append(entry)
  
   # Send list of tuple, and process clustering
-  print('##############################################################################')
-  print('Cluster result:')
+  print('\nClustering…\n')
   cluster = kmean.clustering(dataList, K)
 
+  # Create clusterSize and print cluster result 
+  clusterSize = {}
+  print('Cluster result:')
+  for i in range(len(dataList)):
+    print(f'{i + 1}. {dataList[i][CONST.META_IDX].strftime("%Y/%m/%d")} - {cluster[i]}')
+    
+    clusterKey = f'cluster-{cluster[i]}'
+    if clusterKey in clusterSize:
+      currVal = clusterSize[clusterKey]
+      clusterSize[clusterKey] = currVal + 1
+    else:
+      clusterSize[clusterKey] = 1
+  
+  print('\nSize of cluster member :')
+  for key in clusterSize:
+    print(f'* {key} : {clusterSize[key]}')
+
   # Plot scatter graph
-  print('##############################################################################')
-  print('Graph:')
-  plotScatterGraph(dataList, cluster, country)
+  print('\nProcessing Graph…')
+  scatterGraphCountryDate(dataList, cluster, clusterSize, country, K)
 
   return
 
-# Draw Catter Graph
+# Draw Scatter Graph per country velocity value
 # .  [PARAM]
 # .. dataList -> list tuple, ex: [(1, 2), (2, 0), <META>]
 # .. cluster -> list
 # .. title -> string
 # .
-def plotScatterGraph(dataList, cluster, title):
+def scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, k):
   # Mapping scatter color
   colors = []
   colors.append('g')
@@ -298,24 +374,339 @@ def plotScatterGraph(dataList, cluster, title):
     colors.append('k')
     colors.append('r')
 
+  # define view list
+  viewList = ['COUNTRY', 'CLUSTER']
+
   # Add graph info
-  plt.figure(num=title)
-  plt.xlabel(X_LABEL, fontsize=14)
-  plt.ylabel(Y_LABEL, fontsize=14)
+  fig, ax = plt.subplots(num=title)
+  plt.subplots_adjust(bottom=0.2)
+
+  bnext = None
+  blabel = None
+  listIdx = 1
+  labelInc = 0
+
+  def incDraw(currentList, showLabel):
+    # Export global and nonlocal var
+    global plt
+    nonlocal k
+    nonlocal clusterSize
+    nonlocal ax
+
+    # Clear graph
+    ax.clear()
+
+    # Country view
+    if currentList == 'COUNTRY':
+      # Re-plot, Add graph info
+      ax.set_title(f'Cluster distribution')
+      ax.set_xlabel('case / day', fontsize=11)
+      ax.set_ylabel('death / day', fontsize=11)
+      ax.tick_params(axis='both', which='major', labelsize=10)
+      ax.tick_params(axis='both', which='minor', labelsize=8)
+      ax.grid(linestyle='-', linewidth='0.3', color='gray')
+
+      # Draw scatter
+      for i in range(len(cluster)):
+        entry = dataList[i]
+        if cluster[i] == 0:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[0], label='K1')
+        elif cluster[i] == 1:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[1], label='K2')
+        elif cluster[i] == 2:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[2], label='K3')
+        elif cluster[i] == 3:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[3], label='K4')
+        elif cluster[i] == 4:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[4], label='K5')
+
+        if showLabel:
+          ax.text(entry[CONST.X_IDX], entry[CONST.Y_IDX], entry[CONST.META_IDX], size=7) 
+
+    elif currentList == 'CLUSTER':
+      # Re-plot, Add graph info
+      ax.set_title(f'Cluster member size with K={k}')
+      ax.set_xlabel('size', fontsize=11)
+      ax.set_ylabel('cluster', fontsize=11)
+      ax.tick_params(axis='both', which='major', labelsize=9)
+      ax.tick_params(axis='both', which='minor', labelsize=7)
+
+      # plot data
+      xdata = [ key for key in clusterSize ]
+      ydata = [ clusterSize[key] for key in clusterSize ]
+      for i in range(len(xdata)):
+        if xdata[i] == 'cluster-0':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[0], label='K1')
+        elif xdata[i] == 'cluster-1':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[1], label='K1')
+        elif xdata[i] == 'cluster-2':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[2], label='K1')
+        elif xdata[i] == 'cluster-3':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[3], label='K1')
+        elif xdata[i] == 'cluster-4':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[4], label='K1')
+
+      ax.invert_yaxis()  # labels read top-to-bottom
+
+    # Plot
+    ax.draw(renderer=None, inframe=False)
+    plt.pause(0.0001)
+
+  # Button Next event
+  def next(event):
+    # Export global and nonlocal var
+    nonlocal bnext
+    nonlocal listIdx
+    nonlocal viewList
+
+    # set current
+    currentList = viewList[listIdx]
+    # print(f'\nProcessing - {currentList}')
+
+    incDraw(currentList, True)
+
+    # Button label for next
+    listIdx = listIdx + 1
+    if listIdx >= len(viewList):
+      listIdx = 0
+    bnext.label.set_text(viewList[listIdx])
+
+  # Button Label event
+  def swicth(event):
+    # Export global and nonlocal var
+    nonlocal blabel
+    nonlocal labelInc
+    nonlocal listIdx
+    nonlocal viewList
+
+    labelInc += 1
+    # print(f'LABEL-{labelInc % 2}')
+
+    # get prev list
+    prevList = listIdx - 1
+    if prevList < 0:
+      prevList = len(viewList) - 1
+
+    if labelInc % 2 == 1:
+      blabel.label.set_text('LABEL-ON')
+      incDraw(viewList[prevList], False)
+    else:
+      blabel.label.set_text('LABEL-OFF')
+      incDraw(viewList[prevList], True)
+
+  # Create button Predict
+  axlabel = plt.axes([0.7, 0.05, 0.1, 0.075])
+  axnext = plt.axes([0.81, 0.05, 0.1, 0.075])
+  bnext = Button(axnext, viewList[1]) # CLUSTER NEXT
+  bnext.on_clicked(next)
+  blabel = Button(axlabel, 'LABEL-OFF') # OFF FIRST
+  blabel.on_clicked(swicth)
+
+  ax.set_title(f'Cluster distribution')
+  ax.set_xlabel('case / day', fontsize=11)
+  ax.set_ylabel('death / day', fontsize=11)
+  ax.tick_params(axis='both', which='major', labelsize=10)
+  ax.tick_params(axis='both', which='minor', labelsize=8)
+  ax.grid(linestyle='-', linewidth='0.3', color='gray')
 
   # Draw scatter
   for i in range(len(cluster)):
     entry = dataList[i]
     if cluster[i] == 0:
-      plt.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[0], label='K1')
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[0], label='K1')
     elif cluster[i] == 1:
-      plt.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[1], label='K2')
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[1], label='K2')
     elif cluster[i] == 2:
-      plt.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[2], label='K3')
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[2], label='K3')
     elif cluster[i] == 3:
-      plt.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[3], label='K4')
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[3], label='K4')
     elif cluster[i] == 4:
-      plt.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[4], label='K5')
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[4], label='K5')
+
+    ax.text(entry[CONST.X_IDX], entry[CONST.Y_IDX], entry[CONST.META_IDX], size=7)  
+
+  # plt.legend(loc="best")
+
+  # Show the plot lib
+  plt.show()
+
+  return
+
+# Draw Scatter Graph per country date
+# .  [PARAM]
+# .. dataList -> list tuple, ex: [(1, 2), (2, 0), <META>]
+# .. cluster -> list
+# .. title -> string
+# .
+def scatterGraphCountryDate(dataList, cluster, clusterSize, title, k):
+  # Mapping scatter color
+  colors = []
+  colors.append('g')
+  if k == 2:
+    colors.append('r')
+  elif k == 3:
+    colors.append('y')
+    colors.append('r')
+  elif k == 4:
+    colors.append('c')
+    colors.append('m')
+    colors.append('r')
+  elif k == 5:
+    colors.append('c')
+    colors.append('m')
+    colors.append('k')
+    colors.append('r')
+
+  # define view list
+  viewList = ['DATE', 'CLUSTER']
+
+  # Add graph info
+  fig, ax = plt.subplots(num=title)
+  plt.subplots_adjust(bottom=0.2)
+
+  bnext = None
+  blabel = None
+  listIdx = 1
+  labelInc = 0
+
+  def incDraw(currentList, showLabel):
+    # Export global and nonlocal var
+    global plt
+    nonlocal k
+    nonlocal clusterSize
+    nonlocal ax
+
+    # Clear graph
+    ax.clear()
+
+    # Country view
+    if currentList == 'DATE':
+      # Re-plot, Add graph info
+      ax.set_title(f'Cluster distribution')
+      ax.set_xlabel('case', fontsize=11)
+      ax.set_ylabel('death', fontsize=11)
+      ax.tick_params(axis='both', which='major', labelsize=10)
+      ax.tick_params(axis='both', which='minor', labelsize=8)
+      ax.grid(linestyle='-', linewidth='0.3', color='gray')
+
+      # Draw scatter
+      for i in range(len(cluster)):
+        entry = dataList[i]
+        if cluster[i] == 0:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[0], label='K1')
+        elif cluster[i] == 1:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[1], label='K2')
+        elif cluster[i] == 2:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[2], label='K3')
+        elif cluster[i] == 3:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[3], label='K4')
+        elif cluster[i] == 4:
+          ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[4], label='K5')
+
+        if showLabel:
+          ax.text(entry[CONST.X_IDX], entry[CONST.Y_IDX], entry[CONST.META_IDX].strftime("%Y/%m/%d"), size=7) 
+
+    elif currentList == 'CLUSTER':
+      # Re-plot, Add graph info
+      ax.set_title(f'Cluster member size with K={k}')
+      ax.set_xlabel('size', fontsize=11)
+      ax.set_ylabel('cluster', fontsize=11)
+      ax.tick_params(axis='both', which='major', labelsize=9)
+      ax.tick_params(axis='both', which='minor', labelsize=7)
+
+      # plot data
+      xdata = [ key for key in clusterSize ]
+      ydata = [ clusterSize[key] for key in clusterSize ]
+      for i in range(len(xdata)):
+        if xdata[i] == 'cluster-0':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[0], label='K1')
+        elif xdata[i] == 'cluster-1':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[1], label='K1')
+        elif xdata[i] == 'cluster-2':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[2], label='K1')
+        elif xdata[i] == 'cluster-3':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[3], label='K1')
+        elif xdata[i] == 'cluster-4':
+          ax.barh(xdata[i], ydata[i], align='center', color=colors[4], label='K1')
+
+      ax.invert_yaxis()  # labels read top-to-bottom
+
+    # Plot
+    ax.draw(renderer=None, inframe=False)
+    plt.pause(0.0001)
+
+  # Button Next event
+  def next(event):
+    # Export global and nonlocal var
+    nonlocal bnext
+    nonlocal listIdx
+    nonlocal viewList
+
+    # set current
+    currentList = viewList[listIdx]
+    # print(f'\nProcessing - {currentList}')
+
+    incDraw(currentList, True)
+
+    # Button label for next
+    listIdx = listIdx + 1
+    if listIdx >= len(viewList):
+      listIdx = 0
+    bnext.label.set_text(viewList[listIdx])
+
+  # Button Label event
+  def swicth(event):
+    # Export global and nonlocal var
+    nonlocal blabel
+    nonlocal labelInc
+    nonlocal listIdx
+    nonlocal viewList
+
+    labelInc += 1
+    # print(f'LABEL-{labelInc % 2}')
+
+    # get prev list
+    prevList = listIdx - 1
+    if prevList < 0:
+      prevList = len(viewList) - 1
+
+    if labelInc % 2 == 1:
+      blabel.label.set_text('LABEL-ON')
+      incDraw(viewList[prevList], False)
+    else:
+      blabel.label.set_text('LABEL-OFF')
+      incDraw(viewList[prevList], True)
+
+  # Create button Predict
+  axlabel = plt.axes([0.7, 0.05, 0.1, 0.075])
+  axnext = plt.axes([0.81, 0.05, 0.1, 0.075])
+  bnext = Button(axnext, viewList[1]) # CLUSTER NEXT
+  bnext.on_clicked(next)
+  blabel = Button(axlabel, 'LABEL-OFF') # OFF FIRST
+  blabel.on_clicked(swicth)
+
+  ax.set_title(f'Cluster distribution')
+  ax.set_xlabel('case', fontsize=11)
+  ax.set_ylabel('death', fontsize=11)
+  ax.tick_params(axis='both', which='major', labelsize=10)
+  ax.tick_params(axis='both', which='minor', labelsize=8)
+  ax.grid(linestyle='-', linewidth='0.3', color='gray')
+
+  # Draw scatter
+  for i in range(len(cluster)):
+    entry = dataList[i]
+    if cluster[i] == 0:
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[0], label='K1')
+    elif cluster[i] == 1:
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[1], label='K2')
+    elif cluster[i] == 2:
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[2], label='K3')
+    elif cluster[i] == 3:
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[3], label='K4')
+    elif cluster[i] == 4:
+      ax.scatter(entry[CONST.X_IDX], entry[CONST.Y_IDX], c=colors[4], label='K5')
+
+    ax.text(entry[CONST.X_IDX], entry[CONST.Y_IDX], entry[CONST.META_IDX].strftime("%Y/%m/%d"), size=7)  
 
   # plt.legend(loc="best")
 
@@ -329,14 +720,14 @@ if __name__ == '__main__':
   print('\nReading data...\n')
 
   # Reading source file
-  data = pd.read_excel(FILE_SRC, sheet_name=SHEET)
-  print(data.head())
-  print(data.info())
+  df = pd.read_excel(FILE_SRC, sheet_name=SHEET)
+  print(df.head())
+  print(df.info())
 
   # Extract continents and countries list
   continents = []
   countries = []
-  for index, row in data.iterrows():
+  for index, row in df.iterrows():
     continent = row['continentExp']
     country = row['countriesAndTerritories']
     
@@ -362,19 +753,19 @@ if __name__ == '__main__':
     print('No K specified')
   else:
     if zone == 'WORLD':
-      doClusteringForWorld(data, k)
+      doClusteringForWorld(df, k)
     elif zone == 'SEA':
-      doClusteringForSEA(data, k)
+      doClusteringForSEA(df, k)
     elif zone == 'CONTINENT':
       if subZone == '':
         print('No continent specified')
       else:
-        doClusteringForContinent(data, subZone, k)
+        doClusteringForContinent(df, subZone, k)
     elif zone == 'COUNTRY':
       if subZone == '':
         print('No continent specified')
       else:
-        doClusteringForCountry(data, subZone, k)
+        doClusteringForCountry(df, subZone, k)
     else:
       print('No zone specified')
 

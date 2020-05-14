@@ -1,3 +1,6 @@
+# Debug flag
+DEBUG = False
+
 # K range
 MIN_K = 2
 MAX_K = 5
