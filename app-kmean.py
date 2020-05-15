@@ -11,10 +11,19 @@ import const as CONST
 import menu
 import kmean
 
+# downloader file
+import urllib.request
+
+# common
+import os
+import time
+from os import path
+from datetime import datetime
+
 # source
 # https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
-# https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx
-FILE_SRC = 'COVID-19-geographic-disbtribution-worldwide.xlsx'
+LINK_SRC = 'https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx'
+DOWNLOADED_SRC = 'COVID-19-geographic-disbtribution-worldwide.xlsx'
 SHEET = 'COVID-19-geographic-disbtributi'
 
 # Data label
@@ -108,9 +117,16 @@ def doClusteringForWorld(df, K):
   for key in clusterSize:
     print(f'* {key} : {clusterSize[key]}')
 
+  # sort dataframe first
+  # df = df.sort_values(by='dateRep', ascending=True) # FAIL to SORT
+  # dtMin = df.loc[df.index.max(), 'dateRep']
+  # dtMax = df.loc[df.index.min(), 'dateRep']
+  # title = f'World covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
+  title = 'World covid-19 data'
+
   # Plot scatter graph
   print('\nProcessing Graph…')
-  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, 'World', K)
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, K)
 
   return
 
@@ -213,9 +229,16 @@ def doClusteringForSEA(df, K):
   for key in clusterSize:
     print(f'* {key} : {clusterSize[key]}')
 
+  # sort dataframe first
+  # df = df.sort_values(by='dateRep', ascending=True) # FAIL to SORT
+  # dtMin = df.loc[df.index.max(), 'dateRep']
+  # dtMax = df.loc[df.index.min(), 'dateRep']
+  # title = f'SEA covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
+  title = 'SEA covid-19 data'
+
   # Plot scatter graph
   print('\nProcessing Graph…')
-  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, 'SEA', K)
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, K)
 
   return
 
@@ -297,9 +320,16 @@ def doClusteringForContinent(df, continent, K):
   for key in clusterSize:
     print(f'* {key} : {clusterSize[key]}')
 
+  # sort dataframe first
+  # df = df.sort_values(by='dateRep', ascending=True) # FAIL to SORT
+  # dtMin = df.loc[df.index.max(), 'dateRep']
+  # dtMax = df.loc[df.index.min(), 'dateRep']
+  # title = f'{continent} covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
+  title = f'{continent} covid-19 data'
+
   # Plot scatter graph
   print('\nProcessing Graph…')
-  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, continent, K)
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, K)
 
   return
 
@@ -343,9 +373,15 @@ def doClusteringForCountry(df, country, K):
   for key in clusterSize:
     print(f'* {key} : {clusterSize[key]}')
 
+  # sort dataframe first
+  df = df.sort_values(by='dateRep', ascending=True) # FAIL to SORT
+  dtMin = df.loc[df.index.max(), 'dateRep']
+  dtMax = df.loc[df.index.min(), 'dateRep']
+  title = f'{country} covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
+  
   # Plot scatter graph
   print('\nProcessing Graph…')
-  scatterGraphCountryDate(dataList, cluster, clusterSize, country, K)
+  scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, K)
 
   return
 
@@ -717,12 +753,28 @@ def scatterGraphCountryDate(dataList, cluster, clusterSize, title, k):
 
 # MAIN PROGRAM
 if __name__ == '__main__':
-  print('\nReading data...\n')
+  print('\nReading data…\n')
+  
+  srcExcel = f'cov19-worldwide-{datetime.now().strftime("%Y-%m-%d")}.xls'
+  # Try read Buffer File
+  fileBuffExist = path.exists(srcExcel)
+  if fileBuffExist:
+    print(f'Reading data from local: {srcExcel}')
+  else:
+    try:
+      print('Downloading…')
+      link = LINK_SRC
+      urllib.request.urlretrieve(link, srcExcel)
+    except urllib.error.HTTPError as ex:
+      print('Download FAILED')
+      print(ex)
+
+      print(f'\nUsing EMBEDDED SOURCE: {DOWNLOADED_SRC}')
+      srcExcel = DOWNLOADED_SRC
 
   # Reading source file
-  df = pd.read_excel(FILE_SRC, sheet_name=SHEET)
+  df = pd.read_excel(srcExcel, sheet_name=SHEET)
   print(df.head())
-  print(df.info())
 
   # Extract continents and countries list
   continents = []
