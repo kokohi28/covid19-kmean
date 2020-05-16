@@ -7,7 +7,6 @@ This project works with limitation(for now), as for :
 - K limit from 2 until 5
 
 ## Preview
-Menu
 ![Menu](https://github.com/kokohi28/covid19-kmean/blob/master/menu.png?raw=true)
 
 SEA Cluster
