@@ -360,7 +360,10 @@ def doClusteringForCountry(df, country, K):
   clusterSize = {}
   print('Cluster result:')
   for i in range(len(dataList)):
-    print(f'{i + 1}. {dataList[i][CONST.META_IDX].strftime("%Y/%m/%d")} - {cluster[i]}')
+    if type(dataList[i][CONST.META_IDX]) is datetime.date:
+      print(f'{i + 1}. {dataList[i][CONST.META_IDX].strftime("%Y/%m/%d")} - {cluster[i]}')
+    else:
+      print(f'{i + 1}. {dataList[i][CONST.META_IDX]} - {cluster[i]}')
     
     clusterKey = f'cluster-{cluster[i]}'
     if clusterKey in clusterSize:
@@ -377,8 +380,12 @@ def doClusteringForCountry(df, country, K):
   df = df.sort_values(by='dateRep', ascending=True) # FAIL to SORT
   dtMin = df.loc[df.index.max(), 'dateRep']
   dtMax = df.loc[df.index.min(), 'dateRep']
-  title = f'{country} covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
-  
+  title = f'{country}'
+  if type(dtMin) is datetime.date and type(dtMax) is datetime.date:
+    title = f'{country} covid-19 data {dtMin.strftime("%Y/%m/%d")} - {dtMax.strftime("%Y/%m/%d")}'
+  else:
+    title = f'{country} covid-19 data {dtMin} - {dtMax}'
+
   # Plot scatter graph
   print('\nProcessing Graph…')
   scatterGraphCountryAvgCase(dataList, cluster, clusterSize, title, K)
@@ -822,5 +829,5 @@ if __name__ == '__main__':
       print('No zone specified')
 
   print('')
-  print('Exiting...')
+  print('Exiting…')
   print('')
